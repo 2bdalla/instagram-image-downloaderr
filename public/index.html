@@ -227,10 +227,12 @@
 
                 if (!response.ok) {
 
-                    throw new Error(
-                        data.error || "حصل خطأ"
-                    );
+    throw new Error(
+        data.details || data.error || "حصل خطأ"
+    );
                 }
+                    
+            
 
 
                 console.log(data);
