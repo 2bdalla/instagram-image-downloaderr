@@ -2,74 +2,119 @@
 <html lang="ar" dir="rtl">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Social Image Downloader</title>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Instagram Image Downloader</title>
+
 
     <style>
+
         * {
             box-sizing: border-box;
         }
 
+
         body {
+
             margin: 0;
+
             min-height: 100vh;
+
             font-family: Arial, sans-serif;
+
             background: #101218;
+
             color: white;
 
             display: flex;
+
             justify-content: center;
+
             align-items: center;
 
             padding: 20px;
+
         }
+
 
         .container {
+
             width: 100%;
+
             max-width: 600px;
+
         }
+
 
         h1 {
+
             text-align: center;
+
             margin-bottom: 10px;
+
         }
+
 
         .description {
+
             text-align: center;
+
             color: #aaa;
+
             margin-bottom: 30px;
+
         }
+
 
         .box {
+
             background: #1b1e27;
+
             padding: 20px;
+
             border-radius: 16px;
+
         }
 
+
         input {
+
             width: 100%;
+
             padding: 16px;
 
             border: none;
+
             outline: none;
 
             border-radius: 10px;
 
             background: #292d38;
+
             color: white;
 
             font-size: 16px;
 
             direction: ltr;
+
         }
+
 
         input::placeholder {
+
             color: #888;
+
         }
 
+
         button {
+
             width: 100%;
 
             margin-top: 12px;
@@ -77,248 +122,641 @@
             padding: 15px;
 
             border: none;
+
             border-radius: 10px;
 
             background: #008cff;
+
             color: white;
 
             font-size: 16px;
+
             font-weight: bold;
 
             cursor: pointer;
+
         }
+
 
         button:active {
+
             transform: scale(.98);
+
         }
+
+
+        #downloadAllBtn {
+
+            background: #00a86b;
+
+            display: none;
+
+        }
+
+
+        #downloadAllBtn:disabled {
+
+            background: #555;
+
+            cursor: not-allowed;
+
+        }
+
 
         #status {
+
             text-align: center;
+
             margin-top: 20px;
+
             color: #aaa;
+
         }
+
 
         #results {
+
             margin-top: 20px;
+
         }
+
 
         .image-card {
+
             background: #292d38;
+
             padding: 10px;
+
             border-radius: 10px;
+
             margin-top: 12px;
+
         }
+
 
         .image-card img {
+
             width: 100%;
+
             display: block;
+
             border-radius: 8px;
+
         }
 
+
         .download-btn {
+
             display: block;
+
+            width: 100%;
+
             text-align: center;
+
             text-decoration: none;
+
             background: #00a86b;
+
             color: white;
+
             padding: 12px;
+
             border-radius: 8px;
+
             margin-top: 10px;
+
             font-weight: bold;
+
+            border: none;
+
+            cursor: pointer;
+
         }
+
+
+        .download-btn:active {
+
+            transform: scale(.98);
+
+        }
+
+
+        .number {
+
+            text-align: center;
+
+            color: #aaa;
+
+            margin-top: 8px;
+
+            font-size: 14px;
+
+        }
+
     </style>
+
 </head>
+
 
 <body>
 
-    <div class="container">
 
-        <h1>📥 تحميل صور البوست</h1>
+<div class="container">
 
-        <div class="description">
-            حط لينك بوست Facebook أو Instagram
-        </div>
 
-        <div class="box">
+    <h1>
+        📥 تحميل صور البوست
+    </h1>
 
-            <input
-                id="postUrl"
-                type="url"
-                placeholder="ضع رابط البوست هنا..."
-            >
 
-            <button onclick="extractImages()">
-                استخراج الصور
-            </button>
+    <div class="description">
 
-            <div id="status"></div>
-
-            <div id="results"></div>
-
-        </div>
+        حط لينك بوست Instagram
 
     </div>
 
 
-    <script>
-
-        async function extractImages() {
-
-            const url =
-                document.getElementById("postUrl").value.trim();
-
-            const status =
-                document.getElementById("status");
-
-            const results =
-                document.getElementById("results");
+    <div class="box">
 
 
-            results.innerHTML = "";
+        <input
+            id="postUrl"
+            type="url"
+            placeholder="ضع رابط بوست Instagram هنا..."
+        >
 
 
-            if (!url) {
+        <button
+            id="extractBtn"
+            onclick="extractImages()"
+        >
+            استخراج الصور
+        </button>
 
-                status.innerText =
-                    "❌ حط لينك البوست الأول";
 
-                return;
+        <button
+            id="downloadAllBtn"
+            onclick="downloadAllImages()"
+        >
+            ⬇️ تحميل كل الصور
+        </button>
+
+
+        <div id="status"></div>
+
+
+        <div id="results"></div>
+
+
+    </div>
+
+
+</div>
+
+
+
+<script>
+
+
+let extractedImages = [];
+
+
+// ==================================================
+// EXTRACT IMAGES
+// ==================================================
+
+async function extractImages() {
+
+
+    const url =
+        document
+            .getElementById("postUrl")
+            .value
+            .trim();
+
+
+    const status =
+        document.getElementById("status");
+
+
+    const results =
+        document.getElementById("results");
+
+
+    const downloadAllBtn =
+        document.getElementById("downloadAllBtn");
+
+
+    const extractBtn =
+        document.getElementById("extractBtn");
+
+
+    results.innerHTML = "";
+
+    extractedImages = [];
+
+    downloadAllBtn.style.display = "none";
+
+
+    // ------------------------------------------
+    // Check URL
+    // ------------------------------------------
+
+    if (!url) {
+
+        status.innerText =
+            "❌ حط لينك البوست الأول";
+
+        return;
+
+    }
+
+
+    const instagramPost =
+        /^https?:\/\/(www\.)?instagram\.com\/(p|reel)\/[^\/\s]+/i;
+
+
+    if (!instagramPost.test(url)) {
+
+        status.innerText =
+            "❌ حط لينك بوست Instagram صحيح";
+
+        return;
+
+    }
+
+
+    // ------------------------------------------
+    // Loading
+    // ------------------------------------------
+
+    status.innerText =
+        "⏳ جاري استخراج الصور...";
+
+
+    extractBtn.disabled = true;
+
+
+    try {
+
+
+        const response =
+            await fetch(
+                "/api/extract",
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        url: url
+                    })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.details ||
+                data.error ||
+                "حصل خطأ"
+            );
+
+        }
+
+
+        console.log(data);
+
+
+        const images =
+            data.images ||
+            data.urls ||
+            [];
+
+
+        if (images.length === 0) {
+
+            status.innerText =
+                "❌ لم يتم العثور على صور";
+
+            results.innerHTML =
+                `
+                <p style="
+                    text-align:center;
+                    color:#aaa;
+                ">
+                    لم يتم العثور على صور في البوست.
+                </p>
+                `;
+
+            return;
+
+        }
+
+
+        extractedImages =
+            [...new Set(images)];
+
+
+        status.innerText =
+            `✅ تم العثور على ${extractedImages.length} صورة`;
+
+
+        // ------------------------------------------
+        // Show download all
+        // ------------------------------------------
+
+        downloadAllBtn.style.display =
+            "block";
+
+
+        // ------------------------------------------
+        // Display images
+        // ------------------------------------------
+
+        extractedImages.forEach(
+            (imageUrl, index) => {
+
+
+                const card =
+                    document.createElement("div");
+
+
+                card.className =
+                    "image-card";
+
+
+                const img =
+                    document.createElement("img");
+
+
+                img.src =
+                    imageUrl;
+
+
+                img.alt =
+                    `Instagram image ${index + 1}`;
+
+
+                img.loading =
+                    "lazy";
+
+
+                const number =
+                    document.createElement("div");
+
+
+                number.className =
+                    "number";
+
+
+                number.innerText =
+                    `الصورة ${index + 1}`;
+
+
+                const download =
+                    document.createElement("button");
+
+
+                download.className =
+                    "download-btn";
+
+
+                download.innerText =
+                    `⬇️ تحميل الصورة ${index + 1}`;
+
+
+                download.onclick =
+                    () => downloadImage(
+                        imageUrl,
+                        index
+                    );
+
+
+                card.appendChild(img);
+
+                card.appendChild(number);
+
+                card.appendChild(download);
+
+                results.appendChild(card);
+
             }
+        );
 
 
-            const instagramPost =
-                /^https?:\/\/(www\.)?instagram\.com\/(p|reel)\/[^\/\s]+/i;
+    } catch (error) {
 
 
-            if (!instagramPost.test(url)) {
+        console.error(error);
 
-                status.innerText =
-                    "❌ حط لينك بوست Instagram صحيح";
 
-                return;
-            }
+        status.innerText =
+            "❌ حصل خطأ أثناء استخراج الصور: "
+            + error.message;
+
+
+    } finally {
+
+        extractBtn.disabled = false;
+
+    }
+
+}
+
+
+// ==================================================
+// DOWNLOAD ONE IMAGE
+// ==================================================
+
+async function downloadImage(
+    imageUrl,
+    index
+) {
+
+
+    try {
+
+
+        const status =
+            document.getElementById("status");
+
+
+        status.innerText =
+            `⏳ جاري تحميل الصورة ${index + 1}...`;
+
+
+        const downloadUrl =
+            "/api/download?url="
+            + encodeURIComponent(imageUrl);
+
+
+        const response =
+            await fetch(downloadUrl);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "فشل تحميل الصورة"
+            );
+
+        }
+
+
+        const blob =
+            await response.blob();
+
+
+        const blobUrl =
+            URL.createObjectURL(blob);
+
+
+        const link =
+            document.createElement("a");
+
+
+        link.href =
+            blobUrl;
+
+
+        link.download =
+            `instagram-image-${index + 1}.jpg`;
+
+
+        document.body.appendChild(link);
+
+
+        link.click();
+
+
+        link.remove();
+
+
+        URL.revokeObjectURL(blobUrl);
+
+
+        status.innerText =
+            `✅ تم تحميل الصورة ${index + 1}`;
+
+
+    } catch (error) {
+
+
+        console.error(error);
+
+
+        alert(
+            `❌ فشل تحميل الصورة ${index + 1}`
+        );
+
+    }
+
+}
+
+
+// ==================================================
+// DOWNLOAD ALL IMAGES
+// ==================================================
+
+async function downloadAllImages() {
+
+
+    if (
+        !extractedImages ||
+        extractedImages.length === 0
+    ) {
+
+        return;
+
+    }
+
+
+    const status =
+        document.getElementById("status");
+
+
+    const downloadAllBtn =
+        document.getElementById("downloadAllBtn");
+
+
+    downloadAllBtn.disabled = true;
+
+
+    const total =
+        extractedImages.length;
+
+
+    try {
+
+
+        for (
+            let i = 0;
+            i < total;
+            i++
+        ) {
 
 
             status.innerText =
-                "⏳ جاري استخراج الصور...";
+                `⏳ جاري تحميل الصورة ${i + 1} من ${total}...`;
 
 
-            try {
-
-            const response = await fetch(
-    "/api/extract",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            url: url
-                        })
-                    }
-                );
+            await downloadImage(
+                extractedImages[i],
+                i
+            );
 
 
-                const data =
-                    await response.json();
+            // --------------------------------------
+            // Small delay
+            // --------------------------------------
 
+            await new Promise(
+                resolve =>
+                    setTimeout(
+                        resolve,
+                        500
+                    )
+            );
 
-                if (!response.ok) {
-
-    throw new Error(
-        data.details || data.error || "حصل خطأ"
-    );
-                }
-                    
-            
-
-
-                console.log(data);
-
-
-                status.innerText =
-                    `✅ تم العثور على ${data.count} صورة`;
-
-
-                /*
-                 * عرض الصور لو الـAPI رجّع
-                 * images أو urls
-                 */
-
-                const images =
-                    data.images || data.urls || [];
-
-
-                if (images.length === 0) {
-
-                    results.innerHTML =
-                        "<p style='text-align:center;color:#aaa;'>تم استخراج البيانات، لكن لم يتم إرجاع روابط الصور.</p>";
-
-                    return;
-                }
-
-
-                images.forEach((imageUrl, index) => {
-
-                    const card =
-                        document.createElement("div");
-
-                    card.className =
-                        "image-card";
-
-
-                    const img =
-                        document.createElement("img");
-
-                    img.src =
-                        imageUrl;
-
-                    img.alt =
-                        `Instagram image ${index + 1}`;
-
-
-                    const download =
-                        document.createElement("a");
-
-                    download.href =
-                        imageUrl;
-
-                    download.target =
-                        "_blank";
-
-                    download.rel =
-                        "noopener noreferrer";
-
-                    download.className =
-                        "download-btn";
-
-                    download.innerText =
-                        `⬇️ فتح الصورة ${index + 1}`;
-
-
-                    card.appendChild(img);
-
-                    card.appendChild(download);
-
-                    results.appendChild(card);
-
-                });
-
-
-            } catch (error) {
-
-                console.error(error);
-
-
-                status.innerText =
-                    "❌ حصل خطأ أثناء استخراج الصور: "
-                    + error.message;
-            }
         }
 
-    </script>
+
+        status.innerText =
+            `✅ تم تحميل كل الصور (${total})`;
+
+
+    } catch (error) {
+
+
+        console.error(error);
+
+
+        status.innerText =
+            "❌ حصل خطأ أثناء تحميل الصور";
+
+
+    } finally {
+
+        downloadAllBtn.disabled = false;
+
+    }
+
+}
+
+
+</script>
+
 
 </body>
 
