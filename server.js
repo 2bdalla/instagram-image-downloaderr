@@ -1,4 +1,7 @@
 const express = require("express");
+
+const app = express();
+
 // السماح للواجهة بالتواصل مع السيرفر
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
@@ -11,10 +14,8 @@ app.use((req, res, next) => {
 
     next();
 });
-const app = express();
 
 app.use(express.json());
-
 
 // الصفحة الرئيسية
 app.get("/", (req, res) => {
