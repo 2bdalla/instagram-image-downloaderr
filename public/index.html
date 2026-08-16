@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Social Image Downloader</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: #101218;
+            color: white;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+
+        .box {
+            background: #1b1e27;
+            padding: 20px;
+            border-radius: 16px;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px;
+
+            border: none;
+            outline: none;
+
+            border-radius: 10px;
+
+            background: #292d38;
+            color: white;
+
+            font-size: 16px;
+
+            direction: ltr;
+        }
+
+        input::placeholder {
+            color: #888;
+        }
+
+        button {
+            width: 100%;
+
+            margin-top: 12px;
+
+            padding: 15px;
+
+            border: none;
+            border-radius: 10px;
+
+            background: #008cff;
+            color: white;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        button:active {
+            transform: scale(.98);
+        }
+
+        #status {
+            text-align: center;
+            margin-top: 20px;
+            color: #aaa;
+        }
+
+        #results {
+            margin-top: 20px;
+        }
+
+        .image-card {
+            background: #292d38;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 12px;
+        }
+
+        .image-card img {
+            width: 100%;
+            display: block;
+            border-radius: 8px;
+        }
+
+        .download-btn {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            background: #00a86b;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>📥 تحميل صور البوست</h1>
+
+        <div class="description">
+            حط لينك بوست Facebook أو Instagram
+        </div>
+
+        <div class="box">
+
+            <input
+                id="postUrl"
+                type="url"
+                placeholder="ضع رابط البوست هنا..."
+            >
+
+            <button onclick="extractImages()">
+                استخراج الصور
+            </button>
+
+            <div id="status"></div>
+
+            <div id="results"></div>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        async function extractImages() {
+
+            const url =
+                document.getElementById("postUrl").value.trim();
+
+            const status =
+                document.getElementById("status");
+
+            const results =
+                document.getElementById("results");
+
+
+            results.innerHTML = "";
+
+
+            if (!url) {
+
+                status.innerText =
+                    "❌ حط لينك البوست الأول";
+
+                return;
+            }
+
+
+            const instagramPost =
+                /^https?:\/\/(www\.)?instagram\.com\/(p|reel)\/[^\/\s]+/i;
+
+
+            if (!instagramPost.test(url)) {
+
+                status.innerText =
+                    "❌ حط لينك بوست Instagram صحيح";
+
+                return;
+            }
+
+
+            status.innerText =
+                "⏳ جاري استخراج الصور...";
+
+
+            try {
+
+                const response = await fetch(
+                    "https://image-downloader.onrender.com/extract",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            url: url
+                        })
+                    }
+                );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.error || "حصل خطأ"
+                    );
+                }
+
+
+                console.log(data);
+
+
+                status.innerText =
+                    `✅ تم العثور على ${data.count} صورة`;
+
+
+                /*
+                 * عرض الصور لو الـAPI رجّع
+                 * images أو urls
+                 */
+
+                const images =
+                    data.images || data.urls || [];
+
+
+                if (images.length === 0) {
+
+                    results.innerHTML =
+                        "<p style='text-align:center;color:#aaa;'>تم استخراج البيانات، لكن لم يتم إرجاع روابط الصور.</p>";
+
+                    return;
+                }
+
+
+                images.forEach((imageUrl, index) => {
+
+                    const card =
+                        document.createElement("div");
+
+                    card.className =
+                        "image-card";
+
+
+                    const img =
+                        document.createElement("img");
+
+                    img.src =
+                        imageUrl;
+
+                    img.alt =
+                        `Instagram image ${index + 1}`;
+
+
+                    const download =
+                        document.createElement("a");
+
+                    download.href =
+                        imageUrl;
+
+                    download.target =
+                        "_blank";
+
+                    download.rel =
+                        "noopener noreferrer";
+
+                    download.className =
+                        "download-btn";
+
+                    download.innerText =
+                        `⬇️ فتح الصورة ${index + 1}`;
+
+
+                    card.appendChild(img);
+
+                    card.appendChild(download);
+
+                    results.appendChild(card);
+
+                });
+
+
+            } catch (error) {
+
+                console.error(error);
+
+
+                status.innerText =
+                    "❌ حصل خطأ أثناء استخراج الصور: "
+                    + error.message;
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>
